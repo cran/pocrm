@@ -19,7 +19,7 @@ apred<-rep(0,nrow(alpha))
 			}
 			la
 			}
-		apred[k]<-optimize(f=ll,interval=c(0,100),maximum=T)$maximum
+		apred[k]<-optimize(f=ll,interval=c(0,500),maximum=T)$maximum
 		lik[k]<-ll(apred[k])
 		}
 pord<<-(exp(lik)*prior.o)/sum(exp(lik)*prior.o)
