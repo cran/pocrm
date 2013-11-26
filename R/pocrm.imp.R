@@ -23,7 +23,7 @@ apred<-rep(0,nrow(alpha))
 		lik[k]<-ll(apred[k])
 		}
 pord<<-(exp(lik)*prior.o)/sum(exp(lik)*prior.o)
-library("nnet")
+#library("nnet") not necessary because listed as package dependency
 ord<-which.is.max(pord)
 ahat<-apred[ord]
 rpred<-alpha[ord,]**ahat

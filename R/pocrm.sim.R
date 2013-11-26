@@ -1,5 +1,3 @@
-
-
 pocrm.sim<-function(r,alpha,prior.o,x0,stop,n,theta,nsim,tox.range){
 
 sim <- sim1 <- apred <- lik <- pord <- ord <- ahat <- rpred <- next.lev <- n1 <- N <- NULL
@@ -31,7 +29,7 @@ apred<<-rep(0,s)
 		lik[k]<<-ll(apred[k])
 		}
 pord<<-(exp(lik)*prior.o)/sum(exp(lik)*prior.o)
-library("nnet")
+#library("nnet") not necessary because listed as package dependency
 ord<<-which.is.max(pord)
 ahat<<-apred[ord]
 rpred<<-alpha[ord,]**ahat
