@@ -1,7 +1,7 @@
 pocrm.imp <-
 function(alpha,prior.o,theta,y,combos){
 	
-	pord <- NULL
+	pord <- rep(0,nrow(alpha))
 	
 	data<-as.matrix(table(combos,y))
 	level<-as.numeric(row.names(data))
