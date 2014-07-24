@@ -32,6 +32,9 @@ A vector of dose levels assigned to patients. The length of combos must be equal
 The method bases toxicity probability estimates on the power model (2) of Wages, Conaway and O'Quigley (2011).
 }
 \value{
+ \item{ord.prob}{
+Updated estimates of the ordering probabilities.
+}
   \item{order.est}{
 Updated estimate of the ordering of toxicity probabilities.
 }

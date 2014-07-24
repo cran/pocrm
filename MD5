@@ -1,8 +1,8 @@
-819644178e084d53ce979d7fe264bafe *DESCRIPTION
+92f17d02f3b0fb68cbf1be6bb459025b *DESCRIPTION
 4e78cd868d5386d15b530657e25f8dc9 *NAMESPACE
 3a8fc00803339f944b13a6bed302ef3d *R/getwm.R
-7c1110f81d9bb5cd0057509c07fe233d *R/pocrm.imp.R
+4d2430cc10b6e76558753289dc3057ad *R/pocrm.imp.R
 d0801bfdc3942c98425586590b92cfc7 *R/pocrm.sim.R
 a5469bc230ce8bb6394a1e50eda15483 *man/getwm.Rd
-d1441f452bbba38cd0fe6ffeff82e024 *man/pocrm.imp.Rd
+4b038f05d696ace5b4b5b2bb0c8db2b0 *man/pocrm.imp.Rd
 726294fe7271db5006bb8196fcbf3eb1 *man/pocrm.sim.Rd

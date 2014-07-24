@@ -1,8 +1,6 @@
 pocrm.imp <-
 function(alpha,prior.o,theta,y,combos){
 	
-	pord <- rep(0,nrow(alpha))
-	
 	data<-as.matrix(table(combos,y))
 	level<-as.numeric(row.names(data))
 	nontox<-as.numeric(data[,1])
@@ -22,11 +20,11 @@ apred<-rep(0,nrow(alpha))
 		apred[k]<-optimize(f=ll,interval=c(0,500),maximum=T)$maximum
 		lik[k]<-ll(apred[k])
 		}
-pord<<-(exp(lik)*prior.o)/sum(exp(lik)*prior.o)
+pord<-(exp(lik)*prior.o)/sum(exp(lik)*prior.o)
 #library("nnet") not necessary because listed as package dependency
 ord<-which.is.max(pord)
 ahat<-apred[ord]
 rpred<-alpha[ord,]**ahat
 next.lev<-which.is.max(-(abs(rpred-theta)))
-out<-list(order.est=ord,a.est=round(ahat,3),ptox.est=round(rpred,2),dose.rec=next.lev)
+out<-list(ord.prob=round(pord,3),order.est=ord,a.est=round(ahat,3),ptox.est=round(rpred,3),dose.rec=next.lev)
 }
