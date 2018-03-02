@@ -90,7 +90,7 @@ orders[2,]<-c(1,5,2,3,6,9,13,10,7,4,8,11,14,15,12,16)
 orders[3,]<-c(1,5,2,9,6,3,13,10,7,4,14,11,8,15,12,16)
 
 #Specify the skeleton values.
-skeleton<-c(0.20,0.22,0.24,0.26,0.28,0.30,0.32,0.34,0.36,0.38,0.40,0.42,0.44,0.46,0.48,0.50)
+skeleton<-getprior(0.05,0.30,8,16)
 
 #Initial guesses of toxicity probabilities for each ordering.
 alpha<-getwm(orders,skeleton)
