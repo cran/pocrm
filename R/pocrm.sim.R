@@ -1,13 +1,12 @@
 pocrm.sim<-function(r,alpha,prior.o,x0,stop,n,theta,nsim,tox.range){
-
+  
 sim <- sim1 <- apred <- lik <- pord <- ord <- ahat <- rpred <- next.lev <- n1 <- N <- NULL
-
+  
 d<-ncol(alpha)
 s<-nrow(alpha)
-q<-2
 
-###LOAD FUNCTION 'crm'
-
+if(nsim==1){
+	
 crm<-function(obs,alpha,prior.o,theta){
 
 sim<<-table(obs$level,obs$tox)
@@ -25,11 +24,10 @@ apred<<-rep(0,s)
 			}
 			la
 			}
-		apred[k]<<-optimize(f=ll,interval=c(0,500),maximum=T)$maximum
+		apred[k]<<-optimize(f=ll,interval=c(0,100),maximum=T)$maximum
 		lik[k]<<-ll(apred[k])
 		}
 pord<<-(exp(lik)*prior.o)/sum(exp(lik)*prior.o)
-#library("nnet") not necessary because listed as package dependency
 ord<<-which.is.max(pord)
 ahat<<-apred[ord]
 rpred<<-alpha[ord,]**ahat
@@ -116,36 +114,127 @@ for(j in N:n1){
 	out<-list(trial=obs[obs$level>0,],MTD.selection=MTD)
 	}
 ###'twostgcrm' ENDS HERE
+}
 
+if(nsim>1){
 
-##LOAD FUNCTION 'pocrm.simul'
+###Load the function 'lpocrm' 
+lpocrm<-function(r,alpha,prior.o,x0,stop,n,theta){
+ 
+# if a single ordering is inputed as a vector, convert it to a matrix
+	if(is.vector(alpha)) alpha=t(as.matrix(alpha));
+	
+	nord.tox = nrow(alpha);
+	mprior.tox = prior.o;  # prior for each toxicity ordering
 
-pocrm.simul<-function(nsim,tox.range){
-dlt<-p<-ca<-rep(0,d)
-rec0<-ss<-rep(0,nsim)
-a<-b<-matrix(,nrow=d,ncol=nsim)
-for(g in 1:nsim){
-	fit<-twostgcrm(r,x0,stop,n,theta)
-	ss[g]<-sum(fit$trial$order>0)
-	   for(w in 1:d){
-			a[w,g]<-sum(fit$trial$level[1:ss[g]]==w)
-			b[w,g]<-sum(fit$trial$level[1:ss[g]]==w & fit$trial$tox[1:ss[g]]==1)		
-			rec0[g]<-fit$MTD.selection
+bcrml<-function(a,p1,y,n){
+	lik=0
+	for(j in 1:length(p1)){
+		lik=lik+y[j]*a*log(p1[j])+(n[j]-y[j])*log((1-p1[j]**a));
+		}
+	return(lik);
+    }
+
+### run a trial 	
+    ncomb = ncol(alpha);   #number of combos
+    y=npts=ptox.hat=comb.select=numeric(ncomb);  
+    comb.curr = x0[1];  # current dose level	 
+    stoprule=0; #indicate if trial stops early
+    i=1
+
+stage1<-c(x0,rep(ncol(alpha),n-length(x0)))
+
+##Stage 1
+while(i <= n){
+		y[comb.curr] = y[comb.curr] + rbinom(1,1,r[comb.curr]);
+		npts[comb.curr] = npts[comb.curr] + 1;
+		
+		if(sum(y)==sum(npts)){
+			comb.curr<-ifelse(comb.curr==1,comb.curr,comb.curr-1)
+		} else if(sum(y)==0){
+			comb.curr<-ifelse(comb.curr==ncomb,comb.curr,stage1[i+1])
+		} else {
+			break
+		}
+		if(any(npts>stop)){
+			stoprule<-0
+			break
+		}
+i=i+1
+}
+
+#Stage 2
+while(sum(npts) <= n)
+    {
+		if(sum(y)==0){
+			stop=0
+			break
+		} else{
+		like.tox= est.tox=rep(0, nord.tox);
+		for(k in 1:nord.tox)
+		{
+			est.tox[k]<-optimize(f=bcrml,interval=c(0,100),p1=alpha[k,],y=y,n=npts,maximum=T)$maximum
+			like.tox[k]<-optimize(f=bcrml,interval=c(0,100),p1=alpha[k,],y=y,n=npts,maximum=T)$objective
+		}		
+
+		postprob.tox = (exp(like.tox)*mprior.tox)/sum(exp(like.tox)*mprior.tox);
+		# toxicity model selection, identify the model with the highest posterior prob
+		if(nord.tox>1){ 
+			mtox.sel = which.is.max(postprob.tox); 
+		} else{
+			mtox.sel = 1;
+		}
+
+		ptox.hat=alpha[mtox.sel,]**est.tox[mtox.sel]
+						
+		loss=abs(ptox.hat-theta)
+		comb.curr=which.is.max(-loss)
+		if(npts[comb.curr]==stop){
+			stoprule<-0
+			break
+		}
+
+		if(sum(npts)==n){
+			stoprule=0
+			break
+		} else{
+		# generate data for a new cohort of patients
+		y[comb.curr] = y[comb.curr] + rbinom(1,1,r[comb.curr]);
+		npts[comb.curr] = npts[comb.curr] + 1;
 			}
+		}
+	}
+	if(stoprule==0){
+		comb.select[comb.curr]=comb.select[comb.curr]+1;
+		}
+	return(list(MTD.selection=comb.select,tox.data=y,patient.allocation=npts))
 }
-for(h in 1:d){
-	p[h]<-sum(rec0==h)/nsim
-	ca[h]<-sum(a[h,])/sum(ss)
+##########'lpocrm' end here
 }
-output<-list(true.prob=r,MTD.selection=round(p,2),patient.allocation=round(ca,2),percent.DLT=sum(b)/sum(ss),mean.n=mean(ss),acceptable=sum(p[which(round(abs(r-theta),2)<=tox.range)]))
-}
-##'pocrm.sim' END HERE
 
+###Load the function 'lpocrm.sim' 
+lpocrm.sim<-function(nsim){
+	ncomb=length(r)
+	
+	comb.select<-y<-npts<-matrix(nrow=nsim,ncol=ncomb)
+	trialsize<-rep(0,nsim)
+	nstop=0
+	
+	for(i in 1:nsim){
+		result<-lpocrm(r,alpha,prior.o,x0,stop,n,theta)
+		comb.select[i,]=result$MTD.selection
+		y[i,]=result$tox.data
+		npts[i,]=result$patient.allocation
+		trialsize[i]=sum(result$patient.allocation)
+	}
+return(list(true.prob=r,MTD.selection=round(colMeans(comb.select),2),patient.allocation=round(colMeans(npts)/mean(trialsize),2),percent.DLT=sum(colMeans(y))/mean(trialsize),mean.n=mean(trialsize),acceptable=sum(colMeans(comb.select)[which(round(abs(r-theta),2)<=tox.range)])))
+	}
+##########'lpocrm.sim' end here
 if(nsim==1){
-	out<-twostgcrm(r,x0,stop,n,theta)
+	twostgcrm(r,x0,stop,n,theta)
 } else{
-	out<-pocrm.simul(nsim,tox.range)
+	lpocrm.sim(nsim)
 }
-out
 }
+
 
